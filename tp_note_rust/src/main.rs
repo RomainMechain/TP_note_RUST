@@ -63,6 +63,7 @@ fn main() -> Result<(), ImageError> {
     let rgb_img = img.to_rgb8();
 
     println!("Taille du tableau de pixels : {}", rgb_img.pixels().len());
+    println!("Couleur du pixel (32,52) de l'image : {:?}", rgb_img.get_pixel(32,52));
 
     rgb_img.save("output_rgb8.png")?;
 
