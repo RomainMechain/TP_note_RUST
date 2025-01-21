@@ -69,7 +69,7 @@ rgb_img.save("../images/Question5.png")?;
 
 Il est possible de définir la luminosité d'un pixel à partire de son code rgb, on utilise pour cela la formule `0.2126 * rouge + 0.7152 * vert + 0.0722 * bleu`. 
 
-## Question 7 :
+## Question 7 :
 
 Pour implémenter cette méthode, nous avons le code suivant : 
 
@@ -107,4 +107,101 @@ Nous obtenons donc l'image suivante :
 
 ![alt text](images/Question7.png)
 
-## Question 8 :
+## Question 8 :
+
+Pour permettre à l'utilisateur de choisir ses couleurs, plutôt que d'avoir l'image en seuil de noir et blanc, nous avons créé deux nouveaux arguments, color1 et color2 : 
+```rust
+struct DitherArgs {
+
+    /// le fichier d’entrée
+    #[argh(positional)]
+    input: String,
+
+    /// le fichier de sortie (optionnel)
+    #[argh(positional)]
+    output: Option<String>,
+
+    /// la premiere couleur
+    #[argh(option)]
+    color1: String,
+
+    /// la seconde couleur
+    #[argh(option)]
+    color2: String,
+
+    /// le mode d’opération
+    #[argh(subcommand)]
+    mode: Mode
+
+    
+}
+```
+
+Que l'on va chercher ensuite dans le main : 
+
+```rust
+fn main() -> Result<(), ImageError> {
+    let args: DitherArgs = argh::from_env();
+    if !std::path::Path::new(&args.input).exists() {
+        eprintln!("Erreur : Le fichier d'entrée '{}' n'existe pas.", args.input);
+        std::process::exit(1);
+    }
+
+    let img = image::open(&args.input)?;
+    let mut rgb_img = img.to_rgb8();
+   
+
+    // exercice 8
+    let color1 = hex_to_rgb(&args.color1).expect("Première couleur invalide");
+    let color2 = hex_to_rgb(&args.color2).expect("Deuxième couleur invalide");
+
+    let img = image::open(&args.input)?;
+    let mut rgb_img = img.to_rgb8();
+
+    rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+        let luminosité = calcule_luminosité(*pixel);
+        if luminosité > 128.0 {
+            *pixel = color1;
+        } else {
+            *pixel = color2;
+        }
+    });
+
+    
+    rgb_img.save("../images/Question8.png")?;
+    Ok(())
+}
+```
+Ici on récupère les couleurs en arguments, qui sont en hexadécimal et on les convertis en RGB avec cette fonction : 
+```rust
+fn hex_to_rgb(hex: &str) -> Result<Rgb<u8>, String> {
+    
+    if hex.len() != 6 {
+        return Err(format!("La couleur '{}' n'est pas valide. Utilisez le format #RRGGBB.", hex));
+    }
+    let r = u8::from_str_radix(&hex[0..2], 16).map_err(|_| "Composante rouge invalide")?;
+    let g = u8::from_str_radix(&hex[2..4], 16).map_err(|_| "Composante verte invalide")?;
+    let b = u8::from_str_radix(&hex[4..6], 16).map_err(|_| "Composante bleue invalide")?;
+    Ok(Rgb([r, g, b]))
+}
+```
+Voici un exemple de ligne de commande pour pouvoir executer :
+```
+cargo run -- iut.jpg --color1 00ff00 --color2 0000ff seuil
+```
+Ce qui nous donne cette image : 
+![alt text](images/Question8.png)
+
+## Question 9 :
+
+Pour calculer la distance entre deux couleurs on a décider de prendre les valeurs RGB des deux pixels, puis de calculer la différence entre les valeurs de rouge, vert et bleu, et de finir par calculer la racine carré de la somme des carrés de ces trois valeurs. Ce qui nous donne cette fonction : 
+```rust
+fn calcule_distance_couleur(pixel1: Rgb<u8>, pixel2: Rgb<u8>) -> f32 {
+    let r_diff = pixel1[0] as f32 - pixel2[0] as f32;
+    let g_diff = pixel1[1] as f32 - pixel2[1] as f32;
+    let b_diff = pixel1[2] as f32 - pixel2[2] as f32;
+    (r_diff * r_diff + g_diff * g_diff + b_diff * b_diff).sqrt()
+}
+```
+
+
