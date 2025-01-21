@@ -26,45 +26,59 @@ enum Mode {
 
 #[derive(Debug, Clone, PartialEq, FromArgs)]
 #[argh(subcommand, name="seuil")]
+
 /// Rendu de l’image par seuillage monochrome.
 struct OptsSeuil {}
-
-
 #[derive(Debug, Clone, PartialEq, FromArgs)]
 #[argh(subcommand, name="palette")]
+
 /// Rendu de l’image avec une palette contenant un nombre limité de couleurs
 struct OptsPalette {
-
     /// le nombre de couleurs à utiliser, dans la liste [NOIR, BLANC, ROUGE, VERT, BLEU, JAUNE, CYAN, MAGENTA]
     #[argh(option)]
     n_couleurs: usize
 }
- 
-// const WHITE: image::Rgb<u8> = image::Rgb([255, 255, 255]);
-// const GREY: image::Rgb<u8> = image::Rgb([127, 127, 127]);
-// const BLACK: image::Rgb<u8> = image::Rgb([0, 0, 0]);
-// const BLUE: image::Rgb<u8> = image::Rgb([0, 0, 255]);
-// const RED: image::Rgb<u8> = image::Rgb([255, 0, 0]);
-// const GREEN: image::Rgb<u8> = image::Rgb([0, 255, 0]);
-// const YELLOW: image::Rgb<u8> = image::Rgb([255, 255, 0]);
-// const MAGENTA: image::Rgb<u8> = image::Rgb([255, 0, 255]);
-// const CYAN: image::Rgb<u8> = image::Rgb([0, 255, 255]);
-
-// fn main() -> Result<(), ImageError>{
 use image::{DynamicImage, GenericImageView, ImageError};
+
+// Exercice 7
+fn calcule_luminosité(pixel: image::Rgb<u8>) -> f32 {
+    let r = pixel[0] as f32;
+    let g = pixel[1] as f32;
+    let b = pixel[2] as f32;
+    0.2126 * r + 0.7152 * g + 0.0722 * b
+}
 
 fn main() -> Result<(), ImageError> {
     let img_path = "iut.jpg";
     let img = image::open(img_path)?;
+    let mut rgb_img = img.to_rgb8();
+    //rgb_img.save("output_rgb8.png")?;
 
-    println!("Dimensions: {:?}", img.dimensions());
-    println!("Color type: {:?}", img.color());
+    // Exercice 4
+    let pixel32_52 = rgb_img.get_pixel(32, 52);
+    println!("Pixel (32, 52) : {:?}", pixel32_52);
 
-    let rgb_img = img.to_rgb8();
+    // Exercice 5 
+    // rgb_img.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+    //     if (x + y) % 2 == 0 {
+    //         *pixel = image::Rgb([255, 255, 255]);
+    //     }
+    // });
+    // rgb_img.save("../images/Question5.png")?;
 
-    println!("Taille du tableau de pixels : {}", rgb_img.pixels().len());
+    //exercice 7
+    let luminosité = calcule_luminosité(*pixel32_52);
+    println!("Luminosité du pixel (32, 52) : {}", luminosité);
 
-    rgb_img.save("output_rgb8.png")?;
+    rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+        let luminosité = calcule_luminosité(*pixel);
+        if luminosité > 128.0 {
+            *pixel = image::Rgb([255, 255, 255]);
+        } else {
+            *pixel = image::Rgb([0, 0, 0]);
+        }
+    });
+    rgb_img.save("../images/Question7.png")?;
 
     Ok(())
 }
