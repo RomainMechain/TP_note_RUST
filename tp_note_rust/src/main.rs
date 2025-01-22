@@ -1,4 +1,5 @@
 use argh::FromArgs;
+use rand::Rng;
 
 #[derive(Debug, Clone, PartialEq, FromArgs)]
 /// Convertit une image en monochrome ou vers une palette réduite de couleurs.
@@ -32,16 +33,21 @@ struct DitherArgs {
 enum Mode {
     Seuil(OptsSeuil),
     Palette(OptsPalette),
+    Tramage(OptsTramage),
 }
 
 #[derive(Debug, Clone, PartialEq, FromArgs)]
-#[argh(subcommand, name="seuil")]
+#[argh(subcommand, name="tramage")]
+/// Rendu de l’image par tramage
+struct OptsTramage {}
 
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="seuil")]
 /// Rendu de l’image par seuillage monochrome.
 struct OptsSeuil {}
+
 #[derive(Debug, Clone, PartialEq, FromArgs)]
 #[argh(subcommand, name="palette")]
-
 /// Rendu de l’image avec une palette contenant un nombre limité de couleurs
 struct OptsPalette {
     /// le nombre de couleurs à utiliser, dans la liste [NOIR, BLANC, ROUGE, VERT, BLEU, JAUNE, CYAN, MAGENTA]
@@ -183,9 +189,24 @@ fn main() -> Result<(), ImageError> {
                 *pixel = meilleure_couleur;
             });
         }
+        Mode::Tramage(opts) => {
+            let mut rng = rand::thread_rng();
+            let mut seuil = 128.0;
+            rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+                let luminosité = calcule_luminosité(*pixel);
+                seuil = rng.gen_range(0.0..255.0);
+                if luminosité > seuil {
+                    *pixel = image::Rgb([255, 255, 255]);
+                } else {
+                    *pixel = image::Rgb([0, 0, 0]);
+                }
+            });
+        }
     }
 
-    rgb_img.save("../images/Question10.png")?;
+
+    rgb_img.save("../images/Question12.png")?;
+
 
     Ok(())
 }
