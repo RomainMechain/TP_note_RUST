@@ -13,11 +13,11 @@ struct DitherArgs {
     output: Option<String>,
 
     /// la premiere couleur
-    #[argh(option)]
+    #[argh(option, default = "String::from(\"FFFFFF\")")]
     color1: String,
 
     /// la seconde couleur
-    #[argh(option)]
+    #[argh(option, default = "String::from(\"000000\")")]
     color2: String,
 
     /// le mode d’opération
@@ -185,7 +185,7 @@ fn main() -> Result<(), ImageError> {
         }
     }
 
-    rgb_img.save("../images/Question8.png")?;
+    rgb_img.save("../images/Question10.png")?;
 
     Ok(())
 }
