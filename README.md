@@ -244,3 +244,7 @@ Mode::Tramage(opts) => {
     });
 }
 ```
+
+Ainsi avec la commande suivante `cargo run -- iut.jpg tramage` on obtient l'image suivante :
+
+![alt text](images/Question12.png)
