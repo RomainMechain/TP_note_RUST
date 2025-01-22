@@ -206,6 +206,77 @@ fn calcule_distance_couleur(pixel1: Rgb<u8>, pixel2: Rgb<u8>) -> f32 {
 }
 ```
 
+## Question 10 :
+
+Pour faire ce traitement nous avons, tout d'abord, défini une palette de couleur, et nous demandons à l'utilisateur de fournir le nombre de couleurs qu'il souhaite. Ensuite on vérifie que le nombre de couleurs renseigné est bien valide, si c'est le cas on créer une palette avec le nombre de couleur correspondant. Ensuite pour chaque pixel de l'image on regarde la couleur, de la palette, la plus proche et on modifie le pixel en conséquence. 
+
+```rust
+Mode::Palette(opts) => {
+            let couleurs = vec![
+                Rgb([0, 0, 0]),       // Noir
+                Rgb([255, 255, 255]), // Blanc
+                Rgb([255, 0, 0]),     // Rouge
+                Rgb([0, 255, 0]),     // Vert
+                Rgb([0, 0, 255]),     // Bleu
+                Rgb([255, 255, 0]),   // Jaune
+                Rgb([0, 255, 255]),   // Cyan
+                Rgb([255, 0, 255]),   // Magenta
+            ];
+
+            if opts.n_couleurs == 0 || opts.n_couleurs > couleurs.len() {
+                eprintln!(
+                    "Erreur : Le nombre de couleurs doit être entre 1 et {}.",
+                    couleurs.len()
+                );
+                std::process::exit(1);
+            }
+
+            let palette = &couleurs[..opts.n_couleurs];
+
+            rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+                let mut meilleure_distance = f32::MAX;
+                let mut meilleure_couleur = palette[0];
+
+                for &couleur in palette {
+                    let distance = calcule_distance_couleur(*pixel, couleur);
+                    if distance < meilleure_distance {
+                        meilleure_distance = distance;
+                        meilleure_couleur = couleur;
+                    }
+                }
+
+                *pixel = meilleure_couleur;
+            });
+        }
+```
+
+Voici une ligne de commande qui permet d'executer le mode palette : 
+
+```
+cargo run -- iut.jpg palette --n-couleurs 8
+```
+
+Ce qui donne cette image : 
+
+![alt text](images/Question9.png)
+
+## Question 11 : 
+
+Pour gérer ce comportement nous avons ajouter un message d'erreur si jamais le nombre de couleur spécifié est invalide, ici si il n'est pas entre 1 et 8 : 
+
+![alt text](<images/Capture d’écran_2025-01-22_14-58-37.png>)
+
+Ainsi si le nombre de couleur est invalide on sort de la fonction et on arrête le traitement de l'image :
+
+```rust
+ if opts.n_couleurs == 0 || opts.n_couleurs > couleurs.len() {
+    eprintln!(
+        "Erreur : Le nombre de couleurs doit être entre 1 et {}.",
+        couleurs.len()
+    );
+    std::process::exit(1);
+}
+```
 ## Question 12 : 
 
 Le tramage par seuil aléatoire n'est pas très compliqué à implémenté, en effet, il suffit de reprendre le code de la question 8, et de rajouter une condition pour choisir aléatoirement le seuil à chaque pixel. 
