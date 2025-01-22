@@ -109,6 +109,8 @@ Nous obtenons donc l'image suivante :
 
 ## Question 8 :
 
+A partir de cette étape, nous allons utiliser la bibliothèque argh pour pouvoir appeler les différents fonction de notre programme directement en ligne de commande avec les arguments que l'on souhaite. Cela était nécessaire pour pouvoir laisser le choix des couleurs à l'utilisateur. 
+
 Pour permettre à l'utilisateur de choisir ses couleurs, plutôt que d'avoir l'image en seuil de noir et blanc, nous avons créé deux nouveaux arguments, color1 et color2 : 
 ```rust
 struct DitherArgs {
@@ -204,4 +206,41 @@ fn calcule_distance_couleur(pixel1: Rgb<u8>, pixel2: Rgb<u8>) -> f32 {
 }
 ```
 
+## Question 12 : 
 
+Le tramage par seuil aléatoire n'est pas très compliqué à implémenté, en effet, il suffit de reprendre le code de la question 8, et de rajouter une condition pour choisir aléatoirement le seuil à chaque pixel. 
+
+Nous commençons donc par rajouter les structures nécessaire pour le argh : 
+
+```rust
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand)]
+enum Mode {
+    Seuil(OptsSeuil),
+    Palette(OptsPalette),
+    Tramage(OptsTramage),
+}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="tramage")]
+/// Rendu de l’image par tramage
+struct OptsTramage {}
+```
+
+Enfin, dans le main on rajoute le cas ou le mode est tramage, en rajoute le code de la question 8, avec un appel à la bibliothèque rand préalablement ajouté pour choisir aléatoirement le seuil : 
+
+```rust
+Mode::Tramage(opts) => {
+    let mut rng = rand::thread_rng();
+    let mut seuil = 128.0;
+    rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+        let luminosité = calcule_luminosité(*pixel);
+        seuil = rng.gen_range(0.0..255.0);
+        if luminosité > seuil {
+            *pixel = image::Rgb([255, 255, 255]);
+        } else {
+            *pixel = image::Rgb([0, 0, 0]);
+        }
+    });
+}
+```
