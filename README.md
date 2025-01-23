@@ -410,3 +410,197 @@ Dans ce code, nous récupérons la matrice de bayeur de l'ordre spécifié par l
 Ainsi avec la commande suivante `cargo run -- iut.jpg bayer --ordre 3` on obtient l'image suivante :
 
 ![alt text](images/Question15.png)
+
+## Question 21 :
+
+Lorsque l'on effectue la commande `cargo run -- --help` nous obtenons l'affichage d'aide suivant : 
+
+![alt text](<images/capture help.png>)
+
+## question 22 :
+
+Le type Rust correspondant à une selection d'options fournis par l'utilisateur est une structure (Struct) DitherArgs, que nous avons implémenté de la manière suivante : 
+
+```rust
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+/// Convertit une image en monochrome ou vers une palette réduite de couleurs.
+struct DitherArgs {
+
+    /// le fichier d’entrée
+    #[argh(positional)]
+    input: String,
+
+    /// le fichier de sortie (optionnel)
+    #[argh(positional)]
+    output: Option<String>,
+
+    /// la premiere couleur
+    #[argh(option, default = "String::from(\"FFFFFF\")")]
+    color1: String,
+
+    /// la seconde couleur
+    #[argh(option, default = "String::from(\"000000\")")]
+    color2: String,
+
+    /// le mode d’opération
+    #[argh(subcommand)]
+    mode: Mode
+
+    
+}
+```
+
+## Question 23 : 
+
+Pour implémenter notre interface en ligne de commande, nous avons d'abord ajouter les options dans la Struct DitherArgs, puis les differents modes avec l'Enum Mode : 
+
+```rust
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+/// Convertit une image en monochrome ou vers une palette réduite de couleurs.
+struct DitherArgs {
+
+    /// le fichier d’entrée
+    #[argh(positional)]
+    input: String,
+
+    /// le fichier de sortie (optionnel)
+    #[argh(positional)]
+    output: Option<String>,
+
+    /// la premiere couleur
+    #[argh(option, default = "String::from(\"FFFFFF\")")]
+    color1: String,
+
+    /// la seconde couleur
+    #[argh(option, default = "String::from(\"000000\")")]
+    color2: String,
+
+    /// le mode d’opération
+    #[argh(subcommand)]
+    mode: Mode
+
+    
+}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand)]
+enum Mode {
+    Seuil(OptsSeuil),
+    Palette(OptsPalette),
+    Tramage(OptsTramage),
+    Bayer(OptsBayer),
+}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="bayer")]
+/// Rendu de l’image par tramage d’ordre n
+struct OptsBayer {
+    /// l’ordre de la matrice de Bayer
+    #[argh(option)]
+    ordre: usize
+}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="tramage")]
+/// Rendu de l’image par tramage
+struct OptsTramage {}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="seuil")]
+/// Rendu de l’image par seuillage monochrome.
+struct OptsSeuil {}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="palette")]
+/// Rendu de l’image avec une palette contenant un nombre limité de couleurs
+struct OptsPalette {
+    /// le nombre de couleurs à utiliser, dans la liste [NOIR, BLANC, ROUGE, VERT, BLEU, JAUNE, CYAN, MAGENTA]
+    #[argh(option)]
+    n_couleurs: usize
+}
+```
+
+Enfin nous avons utiliser un match dans le main pour faire gérer les différents modes et options : 
+
+```rust
+
+    match args.mode {
+        Mode::Seuil(_) => {
+            let color1 = hex_to_rgb(&args.color1).expect("Première couleur invalide");
+            let color2 = hex_to_rgb(&args.color2).expect("Deuxième couleur invalide");
+
+            rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+                let luminosité = calcule_luminosité(*pixel);
+                if luminosité > 128.0 {
+                    *pixel = color1;
+                } else {
+                    *pixel = color2;
+                }
+            });
+        }
+        Mode::Palette(opts) => {
+            let couleurs = vec![
+                Rgb([0, 0, 0]),       // Noir
+                Rgb([255, 255, 255]), // Blanc
+                Rgb([255, 0, 0]),     // Rouge
+                Rgb([0, 255, 0]),     // Vert
+                Rgb([0, 0, 255]),     // Bleu
+                Rgb([255, 255, 0]),   // Jaune
+                Rgb([0, 255, 255]),   // Cyan
+                Rgb([255, 0, 255]),   // Magenta
+            ];
+
+            if opts.n_couleurs == 0 || opts.n_couleurs > couleurs.len() {
+                eprintln!(
+                    "Erreur : Le nombre de couleurs doit être entre 1 et {}.",
+                    couleurs.len()
+                );
+                std::process::exit(1);
+            }
+
+            let palette = &couleurs[..opts.n_couleurs];
+
+            rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+                let mut meilleure_distance = f32::MAX;
+                let mut meilleure_couleur = palette[0];
+
+                for &couleur in palette {
+                    let distance = calcule_distance_couleur(*pixel, couleur);
+                    if distance < meilleure_distance {
+                        meilleure_distance = distance;
+                        meilleure_couleur = couleur;
+                    }
+                }
+
+                *pixel = meilleure_couleur;
+            });
+        }
+        Mode::Tramage(opts) => {
+            let mut rng = rand::thread_rng();
+            let mut seuil = 128.0;
+            rgb_img.enumerate_pixels_mut().for_each(|(_x, _y, pixel)| {
+                let luminosité = calcule_luminosité(*pixel);
+                seuil = rng.gen_range(0.0..255.0);
+                if luminosité > seuil {
+                    *pixel = image::Rgb([255, 255, 255]);
+                } else {
+                    *pixel = image::Rgb([0, 0, 0]);
+                }
+            });
+        }
+        Mode::Bayer(opts) => {
+            let matrice_bayer = generation_matrice_bayer(opts.ordre);
+            let taille = matrice_bayer.len();
+            rgb_img.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+                let luminosité = calcule_luminosité(*pixel);
+                let valeur = matrice_bayer[(x % taille as u32) as usize][(y % taille as u32) as usize] as f32;
+                if luminosité > valeur {
+                    *pixel = image::Rgb([255, 255, 255]);
+                } else {
+                    *pixel = image::Rgb([0, 0, 0]);
+                }
+            });
+        }
+    }
+```
