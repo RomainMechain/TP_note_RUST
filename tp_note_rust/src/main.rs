@@ -35,7 +35,13 @@ enum Mode {
     Palette(OptsPalette),
     Tramage(OptsTramage),
     Bayer(OptsBayer),
+    //DiffusionMono(OptsDiffusionMono),
 }
+
+// #[derive(Debug, Clone, PartialEq, FromArgs)]
+// #[argh(subcommand, name="diffusion_mono")]
+// /// Rendu de l’image par diffusion d’erreur en monochrome
+// struct OptsDiffusionMono {}
 
 #[derive(Debug, Clone, PartialEq, FromArgs)]
 #[argh(subcommand, name="bayer")]
@@ -247,6 +253,53 @@ fn main() -> Result<(), ImageError> {
                 }
             });
         }
+        // Mode::DiffusionMono(opts) => {
+        //     let largeur = rgb_img.width();
+        //     let hauteur = rgb_img.height();
+        //     rgb_img.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+        //         let luminosité = calcule_luminosité(*pixel);
+        //         let mut erreur = 0.0;
+        //         let mut blanc = true;
+        //         if luminosité > 128.0 {
+        //             *pixel = image::Rgb([255, 255, 255]);
+        //             erreur = 255.0 - luminosité;
+        //         } else {
+        //             *pixel = image::Rgb([0, 0, 0]);
+        //             erreur = luminosité;
+        //             blanc = false;
+        //         }
+        //         // Ajout de l'erreur sur le pixel de droite 
+        //         if x + 1 < largeur {
+        //             let pixel_droite = rgb_img.get_pixel(x + 1, y);
+        //             if blanc {
+        //                 let r = pixel_droite[0] as f32 + erreur * 0.5;
+        //                 let g = pixel_droite[1] as f32 + erreur * 0.5;
+        //                 let b = pixel_droite[2] as f32 + erreur * 0.5;
+        //                 rgb_img.put_pixel(x + 1, y, image::Rgb([r as u8, g as u8, b as u8]));
+        //             } else {
+        //                 let r = pixel_droite[0] as f32 - erreur * 0.5;
+        //                 let g = pixel_droite[1] as f32 - erreur * 0.5;
+        //                 let b = pixel_droite[2] as f32 - erreur * 0.5;
+        //                 rgb_img.put_pixel(x + 1, y, image::Rgb([r as u8, g as u8, b as u8]));
+        //             }
+        //         }
+        //         // Ajout de l'erreur sur le pixel en bas
+        //         if y + 1 < hauteur {
+        //             let pixel_bas = rgb_img.get_pixel(x, y + 1);
+        //             if blanc {
+        //                 let r = pixel_bas[0] as f32 + erreur * 0.5;
+        //                 let g = pixel_bas[1] as f32 + erreur * 0.5;
+        //                 let b = pixel_bas[2] as f32 + erreur * 0.5;
+        //                 rgb_img.put_pixel(x, y + 1, image::Rgb([r as u8, g as u8, b as u8]));
+        //             } else {
+        //                 let r = pixel_bas[0] as f32 - erreur * 0.5;
+        //                 let g = pixel_bas[1] as f32 - erreur * 0.5;
+        //                 let b = pixel_bas[2] as f32 - erreur * 0.5;
+        //                 rgb_img.put_pixel(x, y + 1, image::Rgb([r as u8, g as u8, b as u8]));
+        //             }
+        //         }
+        //     });
+        // }
     }
     rgb_img.save("../images/Question15.png")?;
 
