@@ -34,6 +34,16 @@ enum Mode {
     Seuil(OptsSeuil),
     Palette(OptsPalette),
     Tramage(OptsTramage),
+    Bayer(OptsBayer),
+}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="bayer")]
+/// Rendu de l’image par tramage d’ordre n
+struct OptsBayer {
+    /// l’ordre de la matrice de Bayer
+    #[argh(option)]
+    ordre: usize
 }
 
 #[derive(Debug, Clone, PartialEq, FromArgs)]
@@ -135,6 +145,28 @@ fn main() -> Result<(), ImageError> {
     //     }
     // });
 
+    fn generation_matrice_bayer(ordre: usize) -> Vec<Vec<u32>> {
+        if ordre == 0 {
+            return vec![vec![0]];
+        }
+
+        let matrice_ordre_precedent = generation_matrice_bayer(ordre - 1);
+        let taille = matrice_ordre_precedent.len();
+        let mut matrice = vec![vec![0; taille * 2]; taille * 2];
+
+        for i in 0..taille {
+            for j in 0..taille {
+                let valeur = matrice_ordre_precedent[i][j];
+                matrice[i][j] = 4 * valeur;
+                matrice[i + taille][j] = 4 * valeur + 2;
+                matrice[i][j + taille] = 4 * valeur + 3;
+                matrice[i + taille][j + taille] = 4 * valeur + 1;
+            }
+        }
+
+        return matrice;
+    }
+
     
     // rgb_img.save("../images/Question8.png")?;
 
@@ -202,10 +234,23 @@ fn main() -> Result<(), ImageError> {
                 }
             });
         }
+        Mode::Bayer(opts) => {
+            let matrice_bayer = generation_matrice_bayer(opts.ordre);
+            let taille = matrice_bayer.len();
+            rgb_img.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+                let luminosité = calcule_luminosité(*pixel);
+                let valeur = matrice_bayer[(x % taille as u32) as usize][(y % taille as u32) as usize] as f32;
+                if luminosité > valeur {
+                    *pixel = image::Rgb([255, 255, 255]);
+                } else {
+                    *pixel = image::Rgb([0, 0, 0]);
+                }
+            });
+        }
     }
 
-
-    rgb_img.save("../images/Question12.png")?;
+    println!("Matrice de Bayer : {:?}", generation_matrice_bayer(3));
+    rgb_img.save("../images/Question15.png")?;
 
 
     Ok(())

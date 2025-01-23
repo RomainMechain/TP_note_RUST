@@ -319,3 +319,25 @@ Mode::Tramage(opts) => {
 Ainsi avec la commande suivante `cargo run -- iut.jpg tramage` on obtient l'image suivante :
 
 ![alt text](images/Question12.png)
+
+## Question 13 :
+
+Voici à quoi ressemble une matrice de bayer d'ordre 3 : 
+
+```
+[0, 32, 8, 40, 2, 34, 10, 42],
+[48, 16, 56, 24, 50, 18, 58, 26], 
+[12, 44, 4, 36, 14, 46, 6, 38], 
+[60, 28, 52, 20, 62, 30, 54, 22],
+[3, 35, 11, 43, 1, 33, 9, 41],
+[51, 19, 59, 27, 49, 17, 57, 25],
+[15, 47, 7, 39, 13, 45, 5, 37],
+[63, 31, 55, 23, 61, 29, 53, 21],
+```
+
+## Question 14 :
+ 
+Pour représenter une matrice de Bayer nous pouvons utiliser une liste de liste. Pour en générer une de taille n, il suffit de faire une fonction recursive, qui a chaque étape recréer une liste 2 fois plus grande et ajoute les nouvelles valeurs. Voici notre fonction : 
+
+```rust
+```
