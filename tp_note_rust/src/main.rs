@@ -248,8 +248,6 @@ fn main() -> Result<(), ImageError> {
             });
         }
     }
-
-    println!("Matrice de Bayer : {:?}", generation_matrice_bayer(3));
     rgb_img.save("../images/Question15.png")?;
 
 

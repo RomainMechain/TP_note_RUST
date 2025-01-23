@@ -337,7 +337,76 @@ Voici à quoi ressemble une matrice de bayer d'ordre 3 :
 
 ## Question 14 :
  
-Pour représenter une matrice de Bayer nous pouvons utiliser une liste de liste. Pour en générer une de taille n, il suffit de faire une fonction recursive, qui a chaque étape recréer une liste 2 fois plus grande et ajoute les nouvelles valeurs. Voici notre fonction : 
+Pour représenter une matrice de Bayer nous pouvons utiliser une liste de liste. Pour en générer une de taille n, il suffit de faire une fonction recursive, qui a chaque étape recréer une liste 2 fois plus grande que la précedente et ajoute les nouvelles valeurs. Voici notre fonction : 
 
 ```rust
+fn generation_matrice_bayer(ordre: usize) -> Vec<Vec<u32>> {
+        if ordre == 0 {
+            return vec![vec![0]];
+        }
+
+        let matrice_ordre_precedent = generation_matrice_bayer(ordre - 1);
+        let taille = matrice_ordre_precedent.len();
+        let mut matrice = vec![vec![0; taille * 2]; taille * 2];
+
+        for i in 0..taille {
+            for j in 0..taille {
+                let valeur = matrice_ordre_precedent[i][j];
+                matrice[i][j] = 4 * valeur;
+                matrice[i + taille][j] = 4 * valeur + 2;
+                matrice[i][j + taille] = 4 * valeur + 3;
+                matrice[i + taille][j + taille] = 4 * valeur + 1;
+            }
+        }
+
+        return matrice;
+    }
 ```
+
+Cette fonction prend en paramètre l'ordre de la matrice de Bayer que l'on souhaite générer, et retourne une liste de liste de u32.
+
+## Question 15 :
+
+Comme pour la question 12, nous avons rajouté une structure pour le argh : 
+
+```rust
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand)]
+enum Mode {
+    Seuil(OptsSeuil),
+    Palette(OptsPalette),
+    Tramage(OptsTramage),
+    Bayer(OptsBayer),
+}
+
+#[derive(Debug, Clone, PartialEq, FromArgs)]
+#[argh(subcommand, name="bayer")]
+/// Rendu de l’image par tramage d’ordre n
+struct OptsBayer {
+    /// l’ordre de la matrice de Bayer
+    #[argh(option)]
+    ordre: usize
+}
+```
+Puis en suite, dans le main nous avons rajouté le cas ou l'utilisateur choisi le mode bayer, et nous avons rajouté le code suivant : 
+
+```rust
+Mode::Bayer(opts) => {
+    let matrice_bayer = generation_matrice_bayer(opts.ordre);
+    let taille = matrice_bayer.len();
+    rgb_img.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+        let luminosité = calcule_luminosité(*pixel);
+        let valeur = matrice_bayer[(x % taille as u32) as usize][(y % taille as u32) as usize] as f32;
+        if luminosité > valeur {
+            *pixel = image::Rgb([255, 255, 255]);
+        } else {
+            *pixel = image::Rgb([0, 0, 0]);
+        }
+    });
+} 
+```
+Dans ce code, nous récupérons la matrice de bayeur de l'ordre spécifié par l'utilisateur, puis, pour chaque pixel, nous récupéron la valeur de la matrice de Bayer correspondant, en faisant ses coordonnées modulo la taille de la matrice. Ensuite, si la luminosité du pixel est supérieur à la valeur de la matrice de Bayer, nous mettons le pixel en blanc, sinon en noir.
+
+Ainsi avec la commande suivante `cargo run -- iut.jpg bayer --ordre 3` on obtient l'image suivante :
+
+![alt text](images/Question15.png)
